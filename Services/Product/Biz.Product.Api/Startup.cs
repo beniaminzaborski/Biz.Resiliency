@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Swashbuckle.AspNetCore.Swagger;
 
 namespace Biz.Product.Api
 {
@@ -25,7 +26,9 @@ namespace Biz.Product.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services
+                .AddCustomMvc()
+                .AddSwagger();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -41,8 +44,32 @@ namespace Biz.Product.Api
                 app.UseHsts();
             }
 
-            app.UseHttpsRedirection();
-            app.UseMvc();
+            app
+                .UseHttpsRedirection()
+                .UseMvc()
+                .UseSwagger().UseSwaggerUI(c => c.SwaggerEndpoint("./v1/swagger.json", "Biz Product API v1"));
+        }
+    }
+
+    public static class ProductExtensions
+    {
+        public static IServiceCollection AddCustomMvc(this IServiceCollection services)
+        {
+            services
+                .AddMvc()
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+
+            return services;
+        }
+
+        public static IServiceCollection AddSwagger(this IServiceCollection services)
+        {
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new Info { Title = "Biz.Product.API", Version = "v1" });
+            });
+
+            return services;
         }
     }
 }
