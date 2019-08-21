@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Biz.Customer.Api.Dtos
+namespace Biz.Resiliency.ApiGateway.PriceAggregator.Dtos
 {
-    public class CustomerDto
+    public class ProductDto
     {
         public Guid Id { get; set; }
 
         public string Name { get; set; }
+
+        public decimal Price { get; set; }
     }
 }
