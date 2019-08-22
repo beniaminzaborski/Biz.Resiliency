@@ -20,8 +20,8 @@ namespace Biz.Customer.Api.Controllers
             list.AddRange(
                 new List<CustomerDto>
                 {
-                    new CustomerDto { Id = new Guid("195ADBA9-61AE-411C-BE02-7B497E55376C"), Name = "Customer 01" },
-                    new CustomerDto { Id = new Guid("4646BAF7-9823-4427-B742-568E51BD6445"), Name = "Customer 02" }
+                    new CustomerDto { Id = new Guid("195ADBA9-61AE-411C-BE02-7B497E55376C"), Name = "Customer 01", Discount = 10 },
+                    new CustomerDto { Id = new Guid("4646BAF7-9823-4427-B742-568E51BD6445"), Name = "Customer 02", Discount = 15 }
                 });
         }
 
