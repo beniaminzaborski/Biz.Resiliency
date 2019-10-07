@@ -87,7 +87,7 @@ namespace Biz.Resiliency.ApiGateway.PriceAggregator
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            
+
             // Register http services
             services.AddHttpClient<IProductApiClient, ProductApiClient>()
                 .AddPolicyHandler(GetRetryPolicy());
@@ -100,10 +100,41 @@ namespace Biz.Resiliency.ApiGateway.PriceAggregator
 
         static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
         {
+            // Manually definied exponential backoff
             return HttpPolicyExtensions
               .HandleTransientHttpError()
-              .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
-              .WaitAndRetryAsync(4, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+              .WaitAndRetryAsync(new[]
+              {
+                TimeSpan.FromSeconds(1),
+                TimeSpan.FromSeconds(2),
+                TimeSpan.FromSeconds(8),
+                TimeSpan.FromSeconds(15)
+              }, (exception, timeSpan, retryCount, context) =>
+              {
+                  // do something    
+              });
+
+            // Exponential backoff by calculation
+            //return HttpPolicyExtensions
+            //        .HandleTransientHttpError()
+            //        .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
+            //        .WaitAndRetryAsync(4, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+
+            // Forever exponential backoff
+            //return HttpPolicyExtensions
+            //        .HandleTransientHttpError()
+            //        .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
+            //        .WaitAndRetryForeverAsync(retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+
+            // Simple Jitter
+            //var jitterer = new Random();
+            //return HttpPolicyExtensions
+            //        .HandleTransientHttpError()
+            //        .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
+            //        .WaitAndRetryAsync(4,
+            //            retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))  // exponential back-off: 2, 4, 8 etc
+            //                + TimeSpan.FromMilliseconds(jitterer.Next(0, 1000)) // plus some jitter: up to 1 second);
+            //        );
         }
     }
 }
