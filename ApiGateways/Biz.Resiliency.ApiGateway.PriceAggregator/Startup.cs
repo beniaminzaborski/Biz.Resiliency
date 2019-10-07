@@ -88,31 +88,12 @@ namespace Biz.Resiliency.ApiGateway.PriceAggregator
         {
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             
-            //register http services
-            services.AddHttpClient<IProductApiClient, ProductApiClient>()
-                .AddPolicyHandler(GetRetryPolicy())
-                .AddPolicyHandler(GetCircuitBreakerPolicy());
+            // Register http services
+            services.AddHttpClient<IProductApiClient, ProductApiClient>();
 
-            services.AddHttpClient<ICustomerApiClient, CustomerApiClient>()
-                .AddPolicyHandler(GetRetryPolicy())
-                .AddPolicyHandler(GetCircuitBreakerPolicy());
+            services.AddHttpClient<ICustomerApiClient, CustomerApiClient>();
 
             return services;
-        }
-
-        static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
-        {
-            return HttpPolicyExtensions
-              .HandleTransientHttpError()
-              .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
-              .WaitAndRetryAsync(6, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
-        }
-
-        static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy()
-        {
-            return HttpPolicyExtensions
-                .HandleTransientHttpError()
-                .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30));
         }
     }
 }
