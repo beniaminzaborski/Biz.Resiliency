@@ -16,6 +16,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
 using Polly.Extensions.Http;
+using Polly.Retry;
 using Swashbuckle.AspNetCore.Swagger;
 
 namespace Biz.Resiliency.ApiGateway.PriceAggregator
@@ -100,19 +101,30 @@ namespace Biz.Resiliency.ApiGateway.PriceAggregator
 
         static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
         {
+            // Simple retry-3-times without Polly.Extensions.Http
+            return Policy
+                .HandleResult<HttpResponseMessage>(r => r.StatusCode == System.Net.HttpStatusCode.NotFound)
+                .RetryAsync(3);
+
+            // Simple retry-3-times
+            //return HttpPolicyExtensions
+            //    // Handles HttpRequestException, Http status codes >= 500 (server errors) and status code 408 (request timeout)
+            //    .HandleTransientHttpError()
+            //    .RetryAsync(3);
+
             // Manually definied exponential backoff
-            return HttpPolicyExtensions
-              .HandleTransientHttpError()
-              .WaitAndRetryAsync(new[]
-              {
-                TimeSpan.FromSeconds(1),
-                TimeSpan.FromSeconds(2),
-                TimeSpan.FromSeconds(8),
-                TimeSpan.FromSeconds(15)
-              }, (exception, timeSpan, retryCount, context) =>
-              {
-                  // do something    
-              });
+            //return HttpPolicyExtensions
+            //  .HandleTransientHttpError()
+            //  .WaitAndRetryAsync(new[]
+            //  {
+            //    TimeSpan.FromSeconds(1),
+            //    TimeSpan.FromSeconds(2),
+            //    TimeSpan.FromSeconds(8),
+            //    TimeSpan.FromSeconds(15)
+            //  }, (exception, timeSpan, retryCount, context) =>
+            //  {
+            //      // do something    
+            //  });
 
             // Exponential backoff by calculation
             //return HttpPolicyExtensions
