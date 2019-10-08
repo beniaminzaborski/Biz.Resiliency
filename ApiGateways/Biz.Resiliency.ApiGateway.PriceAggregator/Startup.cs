@@ -103,7 +103,8 @@ namespace Biz.Resiliency.ApiGateway.PriceAggregator
         {
             // Simple retry-3-times without Polly.Extensions.Http
             return Policy
-                .HandleResult<HttpResponseMessage>(r => r.StatusCode == System.Net.HttpStatusCode.NotFound)
+                .Handle<HttpRequestException>()
+                .OrResult<HttpResponseMessage>(r => r.StatusCode == System.Net.HttpStatusCode.NotFound)
                 .RetryAsync(3);
 
             // Simple retry-3-times
