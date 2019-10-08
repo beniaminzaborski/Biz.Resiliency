@@ -105,12 +105,14 @@ namespace Biz.Resiliency.ApiGateway.PriceAggregator
             return Policy
                 .Handle<HttpRequestException>()
                 .OrResult<HttpResponseMessage>(r => r.StatusCode == System.Net.HttpStatusCode.NotFound)
+                //.OrResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode)
                 .RetryAsync(3);
 
             // Simple retry-3-times
             //return HttpPolicyExtensions
             //    // Handles HttpRequestException, Http status codes >= 500 (server errors) and status code 408 (request timeout)
             //    .HandleTransientHttpError()
+            //    .OrResult(r => r.StatusCode == System.Net.HttpStatusCode.NotFound)
             //    .RetryAsync(3);
 
             // Manually definied exponential backoff
