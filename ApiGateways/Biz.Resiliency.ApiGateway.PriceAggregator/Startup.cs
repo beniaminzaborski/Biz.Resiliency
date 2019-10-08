@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Biz.Resiliency.ApiGateway.PriceAggregator.Configs;
@@ -100,9 +101,42 @@ namespace Biz.Resiliency.ApiGateway.PriceAggregator
 
         static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy()
         {
+            // Simple Circuit-breaker
             return HttpPolicyExtensions
                 .HandleTransientHttpError()
                 .CircuitBreakerAsync(4, TimeSpan.FromSeconds(30));
+
+            // Simple Circuit-breaker with additional handlers
+            //Action<DelegateResult<HttpResponseMessage>, TimeSpan, Context> onBreak = (result, timespan, context) => 
+            //{
+            //    Console.WriteLine("CircuitBreaker: onBreak");
+            //};
+            //Action<Context> onReset = context =>
+            //{
+            //    Console.WriteLine("CircuitBreaker: onReset");
+            //};
+            //return HttpPolicyExtensions
+            //    .HandleTransientHttpError()
+            //    .CircuitBreakerAsync(4, TimeSpan.FromSeconds(30), onBreak, onReset);
+
+            // Advanced Circuit-breaker
+            //return HttpPolicyExtensions
+            //    .HandleTransientHttpError()
+            //    .AdvancedCircuitBreakerAsync(
+            //        failureThreshold: 0.5, // Break on >=50% actions result in handled exceptions...
+            //        samplingDuration: TimeSpan.FromSeconds(10), // ... over any 10 second period
+            //        minimumThroughput: 8, // ... provided at least 8 actions in the 10 second period.
+            //        durationOfBreak: TimeSpan.FromSeconds(30) // Break for 30 seconds.
+            //    );
+
+            //return HttpPolicyExtensions
+            //    .HandleTransientHttpError()
+            //    .AdvancedCircuitBreakerAsync(
+            //        failureThreshold: 0.5, // Break on >=50% actions result in handled exceptions...
+            //        samplingDuration: TimeSpan.FromSeconds(30), // ... over any 30 second period
+            //        minimumThroughput: 4, // ... provided at least 4 actions in the 30 second period.
+            //        durationOfBreak: TimeSpan.FromSeconds(30) // Break for 30 seconds.
+            //    );
         }
     }
 }
