@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using Biz.Customer.Api.Dtos;
 using Microsoft.AspNetCore.Http;
@@ -40,8 +41,10 @@ namespace Biz.Customer.Api.Controllers
         [HttpGet("{id:Guid}")]
         [ProducesResponseType(typeof(CustomerDto), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
-        public async Task<ActionResult<CustomerDto>> GetAsync(Guid id)
+        public async Task<ActionResult<CustomerDto>> GetAsync(Guid id, CancellationToken cancellationToken)
         {
+            await Task.Delay(TimeSpan.FromMinutes(2), cancellationToken);
+
             var customer = list.FirstOrDefault(p => p.Id == id);
             if (customer == null)
                 return NotFound();

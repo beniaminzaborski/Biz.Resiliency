@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Biz.Resiliency.ApiGateway.PriceAggregator.Services
@@ -10,6 +11,6 @@ namespace Biz.Resiliency.ApiGateway.PriceAggregator.Services
     {
         Task<IEnumerable<CustomerDto>> GetAllAsync();
 
-        Task<CustomerDto> GetAsync(Guid id);
+        Task<CustomerDto> GetAsync(Guid id, CancellationToken cancellationToken);
     }
 }

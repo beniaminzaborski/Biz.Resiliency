@@ -91,52 +91,28 @@ namespace Biz.Resiliency.ApiGateway.PriceAggregator
             
             // Register http services
             services.AddHttpClient<IProductApiClient, ProductApiClient>()
-                .AddPolicyHandler(GetCircuitBreakerPolicy());
+                .AddPolicyHandler(GetTimeoutPolicy());
 
             services.AddHttpClient<ICustomerApiClient, CustomerApiClient>()
-                .AddPolicyHandler(GetCircuitBreakerPolicy());
+                .AddPolicyHandler(GetTimeoutPolicy());
 
             return services;
         }
 
-        static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy()
+        static IAsyncPolicy<HttpResponseMessage> GetTimeoutPolicy()
         {
-            // Simple Circuit-breaker
-            return HttpPolicyExtensions
-                .HandleTransientHttpError()
-                .CircuitBreakerAsync(4, TimeSpan.FromSeconds(30));
+            // Timeout from seconds
+            return Policy
+                .TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(20));
 
-            // Simple Circuit-breaker with additional handlers
-            //Action<DelegateResult<HttpResponseMessage>, TimeSpan, Context> onBreak = (result, timespan, context) => 
-            //{
-            //    Console.WriteLine("CircuitBreaker: onBreak");
-            //};
-            //Action<Context> onReset = context =>
-            //{
-            //    Console.WriteLine("CircuitBreaker: onReset");
-            //};
-            //return HttpPolicyExtensions
-            //    .HandleTransientHttpError()
-            //    .CircuitBreakerAsync(4, TimeSpan.FromSeconds(30), onBreak, onReset);
-
-            // Advanced Circuit-breaker
-            //return HttpPolicyExtensions
-            //    .HandleTransientHttpError()
-            //    .AdvancedCircuitBreakerAsync(
-            //        failureThreshold: 0.5, // Break on >=50% actions result in handled exceptions...
-            //        samplingDuration: TimeSpan.FromSeconds(10), // ... over any 10 second period
-            //        minimumThroughput: 8, // ... provided at least 8 actions in the 10 second period.
-            //        durationOfBreak: TimeSpan.FromSeconds(30) // Break for 30 seconds.
-            //    );
-
-            //return HttpPolicyExtensions
-            //    .HandleTransientHttpError()
-            //    .AdvancedCircuitBreakerAsync(
-            //        failureThreshold: 0.5, // Break on >=50% actions result in handled exceptions...
-            //        samplingDuration: TimeSpan.FromSeconds(30), // ... over any 30 second period
-            //        minimumThroughput: 4, // ... provided at least 4 actions in the 30 second period.
-            //        durationOfBreak: TimeSpan.FromSeconds(30) // Break for 30 seconds.
-            //    );
+            // Timeout with handler
+            //return Policy
+            //  .TimeoutAsync<HttpResponseMessage>(30, onTimeoutAsync: (context, timespan, task) =>
+            //  {
+            //      task.ContinueWith(t => {
+            //          if (t.IsFaulted) Console.WriteLine($"{context.PolicyKey} at {context.OperationKey}: execution timed out after {timespan.TotalSeconds} seconds, with: {t.Exception}.");
+            //      });
+            //  });
         }
     }
 }

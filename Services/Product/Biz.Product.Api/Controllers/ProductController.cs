@@ -37,6 +37,9 @@ namespace Biz.Product.Api.Controllers
         [ProducesResponseType(typeof(IEnumerable<ProductDto>), (int)HttpStatusCode.OK)]
         public async Task<IEnumerable<ProductDto>> GetAllAsync()
         {
+            // TODO: Uncomment to show Pessimistic strategy
+            // await Task.Delay(TimeSpan.FromMinutes(1));
+
             return list;
         }
 

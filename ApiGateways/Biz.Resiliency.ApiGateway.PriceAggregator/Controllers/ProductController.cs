@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using Biz.Resiliency.ApiGateway.PriceAggregator.Dtos;
 using Biz.Resiliency.ApiGateway.PriceAggregator.Services;
@@ -27,13 +28,13 @@ namespace Biz.Resiliency.ApiGateway.PriceAggregator.Controllers
 
         [HttpGet("{customerId}:Guid")]
         [ProducesResponseType(typeof(IEnumerable<ProductDto>), (int)HttpStatusCode.OK)]
-        public async Task<IEnumerable<ProductDto>> GetAllByCustomerIdAsync(Guid customerId)
+        public async Task<IEnumerable<ProductDto>> GetAllByCustomerIdAsync(Guid customerId, CancellationToken cancellationToken)
         {
             // Fetch products with regular prices
             var products = await _productClient.GetAllAsync();
 
             // Fetch customer with discount
-            var customer = await _customerClient.GetAsync(customerId);
+            var customer = await _customerClient.GetAsync(customerId, cancellationToken);
 
             // Calculate new prices
             products.ToList().ForEach(p => CalculatePrice(p, customer.Discount));

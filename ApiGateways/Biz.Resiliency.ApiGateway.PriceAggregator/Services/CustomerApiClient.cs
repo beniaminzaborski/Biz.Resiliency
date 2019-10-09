@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Biz.Resiliency.ApiGateway.PriceAggregator.Configs;
 using Biz.Resiliency.ApiGateway.PriceAggregator.Dtos;
@@ -20,6 +21,7 @@ namespace Biz.Resiliency.ApiGateway.PriceAggregator.Services
             IOptions<UrlsConfig> config)
         {
             _apiClient = httpClient;
+            _apiClient.Timeout = TimeSpan.FromMinutes(1);
             urls = config.Value;
         }
 
@@ -34,9 +36,9 @@ namespace Biz.Resiliency.ApiGateway.PriceAggregator.Services
             return JsonConvert.DeserializeObject<IEnumerable<CustomerDto>>(customerResponse);
         }
 
-        public async Task<CustomerDto> GetAsync(Guid id)
+        public async Task<CustomerDto> GetAsync(Guid id, CancellationToken cancellationToken)
         {
-            var response = await _apiClient.GetAsync(urls.Customer + UrlsConfig.CustomerOperations.Get(id));
+            var response = await _apiClient.GetAsync(urls.Customer + UrlsConfig.CustomerOperations.Get(id), cancellationToken);
 
             response.EnsureSuccessStatusCode();
 
