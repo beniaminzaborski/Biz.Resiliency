@@ -7,6 +7,7 @@ using Biz.Resiliency.ApiGateway.PriceAggregator.Configs;
 using Biz.Resiliency.ApiGateway.PriceAggregator.Dtos;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Polly;
 
 namespace Biz.Resiliency.ApiGateway.PriceAggregator.Services
 {
@@ -25,7 +26,13 @@ namespace Biz.Resiliency.ApiGateway.PriceAggregator.Services
 
         public async Task<IEnumerable<ProductDto>> GetAllAsync()
         {
-            var response = await _apiClient.GetAsync(urls.Product + UrlsConfig.ProductOperations.GetAll());
+            var context = new Polly.Context("Products"); // Create cache context and set cache key
+
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, urls.Product + UrlsConfig.ProductOperations.GetAll());
+            request.SetPolicyExecutionContext(context); // Set cache context on HttpRequestMessage
+
+            var response = await _apiClient.SendAsync(request);
+            //var response = await _apiClient.GetAsync(urls.Product + UrlsConfig.ProductOperations.GetAll());
 
             response.EnsureSuccessStatusCode();
             

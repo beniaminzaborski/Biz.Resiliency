@@ -16,6 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
+using Polly.Caching;
 using Polly.Extensions.Http;
 using Swashbuckle.AspNetCore.Swagger;
 
@@ -91,52 +92,42 @@ namespace Biz.Resiliency.ApiGateway.PriceAggregator
             
             // Register http services
             services.AddHttpClient<IProductApiClient, ProductApiClient>()
-                .AddPolicyHandler(GetCircuitBreakerPolicy());
+                .AddPolicyHandler(GetCachePolicy());
 
             services.AddHttpClient<ICustomerApiClient, CustomerApiClient>()
-                .AddPolicyHandler(GetCircuitBreakerPolicy());
+                .AddPolicyHandler(GetCachePolicy());
 
             return services;
         }
 
-        static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy()
+        static IAsyncPolicy<HttpResponseMessage> GetCachePolicy()
         {
-            // Simple Circuit-breaker
-            return HttpPolicyExtensions
-                .HandleTransientHttpError()
-                .CircuitBreakerAsync(4, TimeSpan.FromSeconds(30));
-
-            // Simple Circuit-breaker with additional handlers
-            //Action<DelegateResult<HttpResponseMessage>, TimeSpan, Context> onBreak = (result, timespan, context) => 
-            //{
-            //    Console.WriteLine("CircuitBreaker: onBreak");
-            //};
-            //Action<Context> onReset = context =>
-            //{
-            //    Console.WriteLine("CircuitBreaker: onReset");
-            //};
-            //return HttpPolicyExtensions
-            //    .HandleTransientHttpError()
-            //    .CircuitBreakerAsync(4, TimeSpan.FromSeconds(30), onBreak, onReset);
-
-            // Advanced Circuit-breaker
-            //return HttpPolicyExtensions
-            //    .HandleTransientHttpError()
-            //    .AdvancedCircuitBreakerAsync(
-            //        failureThreshold: 0.5, // Break on >=50% actions result in handled exceptions...
-            //        samplingDuration: TimeSpan.FromSeconds(10), // ... over any 10 second period
-            //        minimumThroughput: 8, // ... provided at least 8 actions in the 10 second period.
-            //        durationOfBreak: TimeSpan.FromSeconds(30) // Break for 30 seconds.
-            //    );
-
-            //return HttpPolicyExtensions
-            //    .HandleTransientHttpError()
-            //    .AdvancedCircuitBreakerAsync(
-            //        failureThreshold: 0.5, // Break on >=50% actions result in handled exceptions...
-            //        samplingDuration: TimeSpan.FromSeconds(30), // ... over any 30 second period
-            //        minimumThroughput: 4, // ... provided at least 4 actions in the 30 second period.
-            //        durationOfBreak: TimeSpan.FromSeconds(30) // Break for 30 seconds.
-            //    );
+            // In-memory cache
+            return Policy
+                .CacheAsync<HttpResponseMessage>(memoryCacheProvider, TimeSpan.FromMinutes(2),
+                onCacheGet: (c, s) => 
+                {
+                    Console.WriteLine("Polly: onCacheGet");
+                },
+                onCacheMiss: (c, s) => 
+                {
+                    Console.WriteLine("Polly: onCacheMiss");
+                },
+                onCachePut: (c, s) => 
+                {
+                    Console.WriteLine("Polly: onCachePut");
+                },
+                onCacheGetError: (c, s, e) => 
+                {
+                    Console.WriteLine("Polly: onCacheGetError");
+                },
+                onCachePutError: (c, s, e) => 
+                {
+                    Console.WriteLine("Polly: onCachePutError");
+                });
         }
+
+        static Microsoft.Extensions.Caching.Memory.IMemoryCache memoryCache = new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions());
+        static Polly.Caching.Memory.MemoryCacheProvider memoryCacheProvider = new Polly.Caching.Memory.MemoryCacheProvider(memoryCache);
     }
 }
