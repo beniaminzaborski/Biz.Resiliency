@@ -102,9 +102,18 @@ namespace Biz.Resiliency.ApiGateway.PriceAggregator
 
         static IAsyncPolicy<HttpResponseMessage> GetCachePolicy()
         {
-            // In-memory cache
+            // In-memory cache with TTL from TimeSpan
+            //return Policy
+            //    .CacheAsync<HttpResponseMessage>(memoryCacheProvider, TimeSpan.FromMinutes(2),
+
+            // In-memory cache with handlers and TTL strategies
+            ITtlStrategy relativeTtlStrategy = new RelativeTtl(TimeSpan.FromMinutes(2));
+            // ITtlStrategy absoluteTtlStrategy = new AbsoluteTtl(DateTime.Now.AddMinutes(2));
+            // ITtlStrategy slidingTtlStrategy = new SlidingTtl(TimeSpan.FromMinutes(2));
+            // ITtlStrategy contextualTtlStrategy = new ContextualTtl();
+
             return Policy
-                .CacheAsync<HttpResponseMessage>(memoryCacheProvider, TimeSpan.FromMinutes(2),
+                .CacheAsync<HttpResponseMessage>(memoryCacheProvider, relativeTtlStrategy,
                 onCacheGet: (c, s) => 
                 {
                     Console.WriteLine("Polly: onCacheGet");
@@ -125,6 +134,7 @@ namespace Biz.Resiliency.ApiGateway.PriceAggregator
                 {
                     Console.WriteLine("Polly: onCachePutError");
                 });
+
         }
 
         static Microsoft.Extensions.Caching.Memory.IMemoryCache memoryCache = new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions());
