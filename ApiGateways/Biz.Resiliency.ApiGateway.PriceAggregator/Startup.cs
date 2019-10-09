@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Formatting;
 using System.Threading.Tasks;
 using Biz.Resiliency.ApiGateway.PriceAggregator.Configs;
+using Biz.Resiliency.ApiGateway.PriceAggregator.Dtos;
 using Biz.Resiliency.ApiGateway.PriceAggregator.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -90,53 +92,26 @@ namespace Biz.Resiliency.ApiGateway.PriceAggregator
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             
             // Register http services
-            services.AddHttpClient<IProductApiClient, ProductApiClient>()
-                .AddPolicyHandler(GetCircuitBreakerPolicy());
+            services.AddHttpClient<IProductApiClient, ProductApiClient>();
 
             services.AddHttpClient<ICustomerApiClient, CustomerApiClient>()
-                .AddPolicyHandler(GetCircuitBreakerPolicy());
+                .AddPolicyHandler(GetCustomerFallbackPolicy());
 
             return services;
         }
 
-        static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy()
+        static IAsyncPolicy<HttpResponseMessage> GetCustomerFallbackPolicy()
         {
-            // Simple Circuit-breaker
+            // Fallback value
+            var response = new HttpResponseMessage(HttpStatusCode.OK);
+            response.Content = new ObjectContent<CustomerDto>(
+                new CustomerDto { Discount = 50 }, 
+                new JsonMediaTypeFormatter());
+
             return HttpPolicyExtensions
                 .HandleTransientHttpError()
-                .CircuitBreakerAsync(4, TimeSpan.FromSeconds(30));
-
-            // Simple Circuit-breaker with additional handlers
-            //Action<DelegateResult<HttpResponseMessage>, TimeSpan, Context> onBreak = (result, timespan, context) => 
-            //{
-            //    Console.WriteLine("CircuitBreaker: onBreak");
-            //};
-            //Action<Context> onReset = context =>
-            //{
-            //    Console.WriteLine("CircuitBreaker: onReset");
-            //};
-            //return HttpPolicyExtensions
-            //    .HandleTransientHttpError()
-            //    .CircuitBreakerAsync(4, TimeSpan.FromSeconds(30), onBreak, onReset);
-
-            // Advanced Circuit-breaker
-            //return HttpPolicyExtensions
-            //    .HandleTransientHttpError()
-            //    .AdvancedCircuitBreakerAsync(
-            //        failureThreshold: 0.5, // Break on >=50% actions result in handled exceptions...
-            //        samplingDuration: TimeSpan.FromSeconds(10), // ... over any 10 second period
-            //        minimumThroughput: 8, // ... provided at least 8 actions in the 10 second period.
-            //        durationOfBreak: TimeSpan.FromSeconds(30) // Break for 30 seconds.
-            //    );
-
-            //return HttpPolicyExtensions
-            //    .HandleTransientHttpError()
-            //    .AdvancedCircuitBreakerAsync(
-            //        failureThreshold: 0.5, // Break on >=50% actions result in handled exceptions...
-            //        samplingDuration: TimeSpan.FromSeconds(30), // ... over any 30 second period
-            //        minimumThroughput: 4, // ... provided at least 4 actions in the 30 second period.
-            //        durationOfBreak: TimeSpan.FromSeconds(30) // Break for 30 seconds.
-            //    );
+                .OrResult(r => r.StatusCode == HttpStatusCode.NotFound)
+                .FallbackAsync(fallbackAction: ct => { return Task.FromResult(response); });
         }
     }
 }

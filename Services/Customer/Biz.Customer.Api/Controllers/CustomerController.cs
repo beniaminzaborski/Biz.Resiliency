@@ -42,11 +42,13 @@ namespace Biz.Customer.Api.Controllers
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
         public async Task<ActionResult<CustomerDto>> GetAsync(Guid id)
         {
-            var customer = list.FirstOrDefault(p => p.Id == id);
-            if (customer == null)
-                return NotFound();
+            return NotFound();
 
-            return customer;
+            //var customer = list.FirstOrDefault(p => p.Id == id);
+            //if (customer == null)
+            //    return NotFound();
+
+            //return customer;
         }
     }
 }
