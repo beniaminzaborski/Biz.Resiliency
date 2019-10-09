@@ -102,7 +102,7 @@ namespace Biz.Resiliency.ApiGateway.PriceAggregator
         static IAsyncPolicy<HttpResponseMessage> GetBulkheadIsolationPolicy()
         {
             return Policy
-                .BulkheadAsync<HttpResponseMessage>(5, 7);
+                .BulkheadAsync<HttpResponseMessage>(1);
         }
     }
 }

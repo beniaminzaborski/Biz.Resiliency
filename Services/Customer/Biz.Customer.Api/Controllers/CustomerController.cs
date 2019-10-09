@@ -42,6 +42,8 @@ namespace Biz.Customer.Api.Controllers
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
         public async Task<ActionResult<CustomerDto>> GetAsync(Guid id)
         {
+            await Task.Delay(TimeSpan.FromSeconds(5));
+
             var customer = list.FirstOrDefault(p => p.Id == id);
             if (customer == null)
                 return NotFound();
