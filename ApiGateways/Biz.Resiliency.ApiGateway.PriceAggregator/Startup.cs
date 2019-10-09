@@ -102,10 +102,21 @@ namespace Biz.Resiliency.ApiGateway.PriceAggregator
 
         static IAsyncPolicy<HttpResponseMessage> GetCustomerFallbackPolicy()
         {
-            // Fallback value
             var response = new HttpResponseMessage(HttpStatusCode.OK);
+
+            // Fallback value
+            //response.Content = new ObjectContent<CustomerDto>(
+            //    new CustomerDto { Discount = 50 }, // Some fallback value
+            //    new JsonMediaTypeFormatter());
+
+            //return HttpPolicyExtensions
+            //    .HandleTransientHttpError()
+            //    .OrResult(r => r.StatusCode == HttpStatusCode.NotFound)
+            //    .FallbackAsync(fallbackAction: ct => { return Task.FromResult(response); });
+
+            // Null fallback value
             response.Content = new ObjectContent<CustomerDto>(
-                new CustomerDto { Discount = 50 }, 
+                null, // Null value
                 new JsonMediaTypeFormatter());
 
             return HttpPolicyExtensions

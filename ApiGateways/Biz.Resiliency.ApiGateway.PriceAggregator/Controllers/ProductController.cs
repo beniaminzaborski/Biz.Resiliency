@@ -35,8 +35,10 @@ namespace Biz.Resiliency.ApiGateway.PriceAggregator.Controllers
             // Fetch customer with discount
             var customer = await _customerClient.GetAsync(customerId);
 
+            decimal discount = customer?.Discount ?? 0m;
+
             // Calculate new prices
-            products.ToList().ForEach(p => CalculatePrice(p, customer.Discount));
+            products.ToList().ForEach(p => CalculatePrice(p, discount));
 
             return products;
         }
