@@ -114,7 +114,7 @@ namespace Biz.Resiliency.ApiGateway.PriceAggregator
             //    .OrResult(r => r.StatusCode == HttpStatusCode.NotFound)
             //    .FallbackAsync(fallbackAction: ct => { return Task.FromResult(response); });
 
-            // Null fallback value
+            // Null fallback value with handler
             response.Content = new ObjectContent<CustomerDto>(
                 null, // Null value
                 new JsonMediaTypeFormatter());
@@ -122,7 +122,12 @@ namespace Biz.Resiliency.ApiGateway.PriceAggregator
             return HttpPolicyExtensions
                 .HandleTransientHttpError()
                 .OrResult(r => r.StatusCode == HttpStatusCode.NotFound)
-                .FallbackAsync(fallbackAction: ct => { return Task.FromResult(response); });
+                .FallbackAsync(fallbackAction: ct => { return Task.FromResult(response); },
+                    onFallbackAsync: e =>
+                    {
+                        Console.WriteLine("Polly: onFallbackAsync");
+                        return Task.CompletedTask;
+                    });
         }
     }
 }
