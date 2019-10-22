@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Formatting;
 using System.Threading.Tasks;
 using Biz.Resiliency.ApiGateway.PriceAggregator.Configs;
+using Biz.Resiliency.ApiGateway.PriceAggregator.Dtos;
 using Biz.Resiliency.ApiGateway.PriceAggregator.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -90,26 +92,36 @@ namespace Biz.Resiliency.ApiGateway.PriceAggregator
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             
             // Register http services
-            services.AddHttpClient<IProductApiClient, ProductApiClient>()
-                .AddPolicyHandler(GetPolicies());
+            services.AddHttpClient<IProductApiClient, ProductApiClient>();
 
             services.AddHttpClient<ICustomerApiClient, CustomerApiClient>()
-                .AddPolicyHandler(GetPolicies());
+                .AddPolicyHandler(GetCustomerPolicies());
 
             return services;
         }
 
-        static IAsyncPolicy<HttpResponseMessage> GetPolicies()
+        static IAsyncPolicy<HttpResponseMessage> GetCustomerPolicies()
         {
+            // Fallback
+            var response = new HttpResponseMessage(HttpStatusCode.OK);
+            response.Content = new ObjectContent<CustomerDto>(
+                null, // Null value
+                new JsonMediaTypeFormatter());
+            var fallbackPolicy = Policy<HttpResponseMessage>
+                .Handle<Exception>()
+                .FallbackAsync(fallbackAction: ct => { return Task.FromResult(response); });
+
+            // Retry
             var retryPolicy = HttpPolicyExtensions
                 .HandleTransientHttpError()
                 .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
+            // Circuit-Breaker
             var circuitBreakerPolicy = HttpPolicyExtensions
                 .HandleTransientHttpError()
                 .CircuitBreakerAsync(3, TimeSpan.FromSeconds(30));
 
-            return Policy.WrapAsync(retryPolicy, circuitBreakerPolicy);
+            return Policy.WrapAsync(fallbackPolicy, retryPolicy, circuitBreakerPolicy);
         }
     }
 }
